@@ -25,43 +25,43 @@ if (( $+commands[pacman] )); then
   alias pacown='pacman -Qo'
   alias pacupd="sudo pacman -Sy"
   alias upgrade='sudo pacman -Syu'
+
+  function paclist() {
+    # Based on https://bbs.archlinux.org/viewtopic.php?id=93683
+    pacman -Qqe | \
+      xargs -I '{}' \
+        expac "${bold_color}% 20n ${fg_no_bold[white]}%d${reset_color}" '{}'
+  }
+
+  function pacdisowned() {
+    local tmp db fs
+    tmp=${TMPDIR-/tmp}/pacman-disowned-$UID-$$
+    db=$tmp/db
+    fs=$tmp/fs
+
+    mkdir "$tmp"
+    trap 'rm -rf "$tmp"' EXIT
+
+    pacman -Qlq | sort -u > "$db"
+
+    find /bin /etc /lib /sbin /usr ! -name lost+found \
+      \( -type d -printf '%p/\n' -o -print \) | sort > "$fs"
+
+    comm -23 "$fs" "$db"
+  }
+
+  alias pacmanallkeys='sudo pacman-key --refresh-keys'
+
+  function pacmansignkeys() {
+    local key
+    for key in $@; do
+      sudo pacman-key --recv-keys $key
+      sudo pacman-key --lsign-key $key
+      printf 'trust\n3\n' | sudo gpg --homedir /etc/pacman.d/gnupg \
+        --no-permission-warning --command-fd 0 --edit-key $key
+    done
+  }
 fi
-
-function paclist() {
-  # Based on https://bbs.archlinux.org/viewtopic.php?id=93683
-  pacman -Qqe | \
-    xargs -I '{}' \
-      expac "${bold_color}% 20n ${fg_no_bold[white]}%d${reset_color}" '{}'
-}
-
-function pacdisowned() {
-  local tmp db fs
-  tmp=${TMPDIR-/tmp}/pacman-disowned-$UID-$$
-  db=$tmp/db
-  fs=$tmp/fs
-
-  mkdir "$tmp"
-  trap 'rm -rf "$tmp"' EXIT
-
-  pacman -Qlq | sort -u > "$db"
-
-  find /bin /etc /lib /sbin /usr ! -name lost+found \
-    \( -type d -printf '%p/\n' -o -print \) | sort > "$fs"
-
-  comm -23 "$fs" "$db"
-}
-
-alias pacmanallkeys='sudo pacman-key --refresh-keys'
-
-function pacmansignkeys() {
-  local key
-  for key in $@; do
-    sudo pacman-key --recv-keys $key
-    sudo pacman-key --lsign-key $key
-    printf 'trust\n3\n' | sudo gpg --homedir /etc/pacman.d/gnupg \
-      --no-permission-warning --command-fd 0 --edit-key $key
-  done
-}
 
 if (( $+commands[xdg-open] )); then
   function pacweb() {
@@ -118,69 +118,4 @@ if (( $+commands[aura] )); then
   alias auls="aura -Qql"
   function auownloc() { aura -Qi  $(aura -Qqo $@); }
   function auownls () { aura -Qql $(aura -Qqo $@); }
-fi
-
-if (( $+commands[pacaur] )); then
-  alias pacclean='pacaur -Sc'
-  alias pacclr='pacaur -Scc'
-  alias paupg='pacaur -Syu'
-  alias pasu='pacaur -Syu --noconfirm'
-  alias pain='pacaur -S'
-  alias pains='pacaur -U'
-  alias pare='pacaur -R'
-  alias parem='pacaur -Rns'
-  alias parep='pacaur -Si'
-  alias pareps='pacaur -Ss'
-  alias paloc='pacaur -Qi'
-  alias palocs='pacaur -Qs'
-  alias palst='pacaur -Qe'
-  alias paorph='pacaur -Qtd'
-  alias painsd='pacaur -S --asdeps'
-  alias pamir='pacaur -Syy'
-  alias paupd="pacaur -Sy"
-  alias upgrade='pacaur -Syu'
-fi
-
-if (( $+commands[trizen] )); then
-  alias trconf='trizen -C'
-  alias trupg='trizen -Syua'
-  alias trsu='trizen -Syua --noconfirm'
-  alias trin='trizen -S'
-  alias trclean='trizen -Sc'
-  alias trclr='trizen -Scc'
-  alias trins='trizen -U'
-  alias trre='trizen -R'
-  alias trrem='trizen -Rns'
-  alias trrep='trizen -Si'
-  alias trreps='trizen -Ss'
-  alias trloc='trizen -Qi'
-  alias trlocs='trizen -Qs'
-  alias trlst='trizen -Qe'
-  alias trorph='trizen -Qtd'
-  alias trinsd='trizen -S --asdeps'
-  alias trmir='trizen -Syy'
-  alias trupd="trizen -Sy"
-  alias upgrade='trizen -Syu'
-fi
-
-if (( $+commands[yay] )); then
-  alias yaconf='yay -Pg'
-  alias yaclean='yay -Sc'
-  alias yaclr='yay -Scc'
-  alias yaupg='yay -Syu'
-  alias yasu='yay -Syu --noconfirm'
-  alias yain='yay -S'
-  alias yains='yay -U'
-  alias yare='yay -R'
-  alias yarem='yay -Rns'
-  alias yarep='yay -Si'
-  alias yareps='yay -Ss'
-  alias yaloc='yay -Qi'
-  alias yalocs='yay -Qs'
-  alias yalst='yay -Qe'
-  alias yaorph='yay -Qtd'
-  alias yainsd='yay -S --asdeps'
-  alias yamir='yay -Syy'
-  alias yaupd="yay -Sy"
-  alias upgrade='yay -Syu'
 fi
